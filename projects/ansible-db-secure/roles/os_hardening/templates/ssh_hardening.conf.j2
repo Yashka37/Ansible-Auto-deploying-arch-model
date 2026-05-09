@@ -1,0 +1,12 @@
+PermitRootLogin {{ os_ssh_permit_root_login }}
+PasswordAuthentication {{ os_ssh_password_authentication }}
+PubkeyAuthentication {{ os_ssh_pubkey_authentication }}
+MaxAuthTries {{ os_ssh_max_auth_tries }}
+
+ClientAliveInterval {{ os_ssh_client_alive_interval }}
+ClientAliveCountMax {{ os_ssh_client_alive_count_max }}
+X11Forwarding {{ os_ssh_x11_forwarding }}
+PermitEmptyPasswords no
+
+UsePAM yes
+

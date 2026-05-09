@@ -1,0 +1,15 @@
+---
+db_port: 5432
+db_listen_address: "127.0.0.1"
+db_allowed_clients: []
+db_app_database: "appdb"
+db_app_user: "appuser"
+
+postgresql_major_version: "16"
+postgresql_conf_dir: "/etc/postgresql/{{ postgresql_major_version }}/main"
+postgresql_conf_d_dir: "{{ postgresql_conf_dir }}/conf.d"
+postgresql_hba_path: "{{ postgresql_conf_dir }}/pg_hba.conf"
+
+postgresql_log_connections: "on"
+postgresql_log_disconnections: "on"
+postgresql_logging_collector: "on"

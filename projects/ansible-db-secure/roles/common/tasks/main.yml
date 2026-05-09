@@ -1,0 +1,41 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+  when:
+    - ansible_os_family == "Debian"
+    - common_update_apt_cache | default(true)
+
+- name: Install base packages
+  apt:
+    name: "{{ (common_packages | default([])) + (common_extra_packages | default([])) }}"
+    state: present
+  when:
+    - ansible_os_family == "Debian"
+    - common_manage_base_packages | default(true)
+
+- name: Create common working directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ project_owner | default('user1') }}"
+    group: "{{ project_group | default('user1') }}"
+    mode: "0755"
+  loop: "{{ common_directories | default([]) }}"
+  when:
+    - common_manage_base_dirs | default(true)
+    - common_create_workdirs | default(true)
+
+- name: Ensure rsyslog service is enabled and started
+  systemd:
+    name: rsyslog
+    enabled: true
+    state: started
+  when:
+    - common_manage_rsyslog | default(true)
+    - common_enable_rsyslog_service | default(true)
+
+- name: Gather package facts
+  package_facts:
+    manager: auto

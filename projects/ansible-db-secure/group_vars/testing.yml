@@ -1,0 +1,32 @@
+---
+testing_target_host: "db_main"
+testing_target_ip: "192.168.56.20"
+testing_controller_ip: "192.168.56.10"
+testing_client_ip: "192.168.56.30"
+
+testing_db_name: "appdb"
+testing_db_user: "appuser"
+testing_db_port: 5432
+
+testing_expected_listen_addresses: "192.168.56.20"
+testing_expected_log_connections: "on"
+testing_expected_ssh_root_login: "no"
+testing_expected_ssh_password_auth: "no"
+
+testing_expected_sysctl:
+  kernel.kptr_restrict: "2"
+  kernel.yama.ptrace_scope: "3"
+  fs.protected_symlinks: "1"
+
+testing_expected_hba_clients:
+  - "192.168.56.10/32"
+  - "192.168.56.30/32"
+
+testing_max_full_deploy_time_sec: 900
+testing_max_hardening_time_sec: 300
+testing_max_audit_time_sec: 180
+
+testing_idempotency_max_changed_second_run: 2
+
+testing_required_reports:
+  - "baseline-report"

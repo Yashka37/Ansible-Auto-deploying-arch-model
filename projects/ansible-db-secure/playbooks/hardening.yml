@@ -1,0 +1,7 @@
+---
+- name: Apply OS hardening baseline to DB servers
+  hosts: db_servers
+  become: true
+  roles:
+    - os_hardening
+

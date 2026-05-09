@@ -1,0 +1,42 @@
+---
+- name: Ensure PostgreSQL conf.d directory exists
+  file:
+    path: "{{ postgresql_conf_d_dir }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: "0755"
+
+- name: Deploy PostgreSQL hardening drop-in
+  template:
+    src: 99-ansible-postgresql-hardening.conf.j2
+    dest: "{{ postgresql_conf_d_dir }}/99-ansible-postgresql-hardening.conf"
+    owner: postgres
+    group: postgres
+    mode: "0640"
+  notify: Restart PostgreSQL
+
+- name: Deploy base pg_hba baseline
+  template:
+    src: pg_hba.conf.j2
+    dest: "{{ postgresql_hba_path }}"
+    owner: postgres
+    group: postgres
+    mode: "0640"
+  notify: Restart PostgreSQL
+
+- name: HBA - Ensure allowed application access block is present in pg_hba.conf
+  blockinfile:
+    path: "{{ postgresql_hba_path }}"
+    marker: "# {mark} ANSIBLE APP ACCESS"
+    insertafter: EOF
+    block: |
+      host    {{ db_app_database }}    {{ db_app_user }}    192.168.56.10/32    scram-sha-256
+      host    {{ db_app_database }}    {{ db_app_user }}    192.168.56.30/32    scram-sha-256
+    owner: postgres
+    group: postgres
+    mode: "0640"
+  notify: Restart PostgreSQL
+
+- name: Flush PostgreSQL handlers
+  meta: flush_handlers

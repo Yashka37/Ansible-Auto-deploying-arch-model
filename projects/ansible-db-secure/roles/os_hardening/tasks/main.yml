@@ -1,0 +1,146 @@
+---
+- name: Install hardening packages
+  apt:
+    name: "{{ os_hardening_packages }}"
+    state: present
+    update_cache: true
+  when: ansible_os_family == "Debian"
+
+- name: Ensure managed sudoers file for automation user
+  copy:
+    dest: "/etc/sudoers.d/99-{{ os_hardening_sudo_user }}"
+    content: "{{ os_hardening_sudo_user }} ALL=(ALL) {% if os_hardening_sudo_nopasswd %}NOPASSWD:{% endif %}ALL\n"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "visudo -cf %s"
+  when: os_hardening_manage_sudoers_user
+
+- name: Deploy SSH hardening drop-in
+  template:
+    src: ssh_hardening.conf.j2
+    dest: /etc/ssh/sshd_config.d/99-ansible-hardening.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart ssh
+
+- name: Ensure pwquality drop-in directory exists
+  file:
+    path: /etc/security/pwquality.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy pwquality baseline
+  template:
+    src: pwquality-lab.conf.j2
+    dest: /etc/security/pwquality.conf.d/99-ansible-lab.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Set PASS_MAX_DAYS in login.defs
+  lineinfile:
+    path: /etc/login.defs
+    regexp: '^PASS_MAX_DAYS'
+    line: "PASS_MAX_DAYS   {{ os_login_defs.PASS_MAX_DAYS }}"
+
+- name: Set PASS_MIN_DAYS in login.defs
+  lineinfile:
+    path: /etc/login.defs
+    regexp: '^PASS_MIN_DAYS'
+    line: "PASS_MIN_DAYS   {{ os_login_defs.PASS_MIN_DAYS }}"
+
+- name: Set PASS_WARN_AGE in login.defs
+  lineinfile:
+    path: /etc/login.defs
+    regexp: '^PASS_WARN_AGE'
+    line: "PASS_WARN_AGE   {{ os_login_defs.PASS_WARN_AGE }}"
+
+- name: Apply critical file permissions
+  file:
+    path: "{{ item.path }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop: "{{ os_critical_file_permissions }}"
+
+- name: Protect selected home directories
+  file:
+    path: "{{ item.path }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+    state: directory
+  loop: "{{ os_protected_home_dirs }}"
+
+- name: Deploy sysctl hardening file
+  template:
+    src: 99-ansible-hardening.conf.j2
+    dest: /etc/sysctl.d/99-ansible-hardening.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Apply sysctl settings
+
+- name: Deploy audit rules for hardening baseline
+  template:
+    src: 99-ansible-hardening.rules.j2
+    dest: /etc/audit/rules.d/99-ansible-hardening.rules
+    owner: root
+    group: root
+    mode: "0640"
+  notify: Restart auditd
+
+- name: Ensure auditd service is enabled and started
+  systemd:
+    name: auditd
+    enabled: true
+    state: started
+
+- name: Install UFW allow rule for SSH
+  command: "ufw allow from {{ item }} to any port {{ ssh_port | default(22) }} proto tcp"
+  loop: "{{ ssh_allowed_clients | default([]) }}"
+  register: ufw_ssh_rule
+  changed_when: "'Skipping adding existing rule' not in ufw_ssh_rule.stdout"
+  failed_when: false
+
+- name: Install UFW allow rules for DB clients
+  command: "ufw allow from {{ item }} to any port {{ db_port | default(5432) }} proto tcp"
+  loop: "{{ db_allowed_clients | default([]) }}"
+  register: ufw_db_rules
+  changed_when: "'Skipping adding existing rule' not in ufw_db_rules.stdout"
+  failed_when: false
+
+- name: Set UFW default incoming policy
+  command: "ufw default deny incoming"
+  register: ufw_default_inc
+  changed_when: "'Default incoming policy changed to' in ufw_default_in.stdout"
+  failed_when: false
+
+- name: Set UFW default outgoing policy
+  command: "ufw default allow outgoing"
+  register: ufw_default_out
+  changed_when: "'Default outgoing policy changed to' in ufw_default_out.stdout"
+  failed_when: false
+
+- name: Enable UFW
+  command: "ufw --force enable"
+  register: ufw_enable
+  changed_when: "'Firewall is active and enabled on system startup' in ufw_enable_cmd.stdout or 'Command may disrupt existing ssh connections' in ufw_enable_cmd.stdout"
+  failed_when: false
+
+
+- name: Apply sysctl settings immediately
+  command: sysctl --system
+  changed_when: false
+
+- name: Load audit rules immediately
+  command: augenrules --load
+  changed_when: false
+
+- name: Flush handlers
+  meta: flush_handlers
+

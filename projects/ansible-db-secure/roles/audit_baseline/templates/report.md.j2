@@ -1,0 +1,45 @@
+# Baseline Audit Report
+
+- Host: {{ inventory_hostname }}
+- Generated: {{ ansible_date_time.iso8601 }}
+
+## 1. Service State
+- PostgreSQL wrapper service: {{ db_service_state.stdout | default('unknown') }}
+- PostgreSQL cluster service: {{ db_cluster_service_state.stdout | default('unknown') }}
+- auditd: {{ auditd_service_state.stdout | default('unknown') }}
+- pg_isready:
+{{ db_pg_isready.stdout | default('unknown') }}
+
+## 2. SSH Hardening
+- SSH drop-in exists: {{ ssh_dropin_stat.stat.exists }}
+
+## 3. Password Policy
+- pwquality baseline exists: {{ pwquality_stat.stat.exists }}
+
+## 4. Firewall
+{{ ufw_status.stdout | default('unknown') }}
+
+## 5. Runtime sysctl
+- kernel.kptr_restrict: {{ sysctl_kptr.stdout | default('unknown') }}
+- kernel.yama.ptrace_scope: {{ sysctl_ptrace.stdout | default('unknown') }}
+- fs.protected_symlinks: {{ sysctl_symlinks.stdout | default('unknown') }}
+
+## 6. Audit
+- audit rules file exists: {{ audit_rules_stat.stat.exists }}
+- active audit rules:
+{{ audit_rules_active.stdout | default('unknown') }}
+
+## 7. PostgreSQL
+- App role exists: {{ db_role_check.stdout | trim }}
+- App database exists: {{ db_database_check.stdout | trim }}
+- listen_addresses:
+{{ db_listen_check.stdout | default('unknown') }}
+- log_connections:
+{{ db_log_connections_check.stdout | default('unknown') }}
+
+## 8. pg_hba baseline
+- HBA marker block present: {{ hba_marker_check.rc == 0 }}
+{{ db_hba_check.stdout | default('unknown') }}
+
+## Conclusion
+This report reflects the current configuration state of the host against the selected lab baseline.

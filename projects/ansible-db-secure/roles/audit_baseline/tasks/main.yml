@@ -1,0 +1,131 @@
+---
+- name: Check PostgreSQL wrapper service state
+  command: systemctl is-active {{ db_service_name | default('postgresql') }}
+  register: db_service_state
+  changed_when: false
+  failed_when: false
+
+- name: Check PostgreSQL cluster service state
+  command: systemctl is-active {{ postgresql_cluster_service_name | default('postgresql@16-main') }}
+  register: db_cluster_service_state
+  changed_when: false
+  failed_when: false
+
+- name: Check auditd service state
+  command: systemctl is-active auditd
+  register: auditd_service_state
+  changed_when: false
+  failed_when: false
+
+- name: Check PostgreSQL readiness
+  command: pg_isready -h {{ db_listen_address | default('192.168.56.20') }} -p {{ db_port | default(5432) }}
+  register: db_pg_isready
+  changed_when: false
+  failed_when: false
+
+- name: Check SSH hardening file exists
+  stat:
+    path: /etc/ssh/sshd_config.d/99-ansible-hardening.conf
+  register: ssh_dropin_stat
+
+- name: Check pwquality baseline exists
+  stat:
+    path: /etc/security/pwquality.conf.d/99-ansible-lab.conf
+  register: pwquality_stat
+
+- name: Read UFW status
+  command: ufw status verbose
+  register: ufw_status
+  changed_when: false
+  failed_when: false
+
+- name: Read kernel.kptr_restrict
+  command: sysctl -n kernel.kptr_restrict
+  register: sysctl_kptr
+  changed_when: false
+  failed_when: false
+
+- name: Read kernel.yama.ptrace_scope
+  command: sysctl -n kernel.yama.ptrace_scope
+  register: sysctl_ptrace
+  changed_when: false
+  failed_when: false
+
+- name: Read fs.protected_symlinks
+  command: sysctl -n fs.protected_symlinks
+  register: sysctl_symlinks
+  changed_when: false
+  failed_when: false
+
+- name: Check audit rules file exists
+  stat:
+    path: /etc/audit/rules.d/99-ansible-hardening.rules
+  register: audit_rules_stat
+
+- name: Read active audit rules
+  command: auditctl -l
+  register: audit_rules_active
+  changed_when: false
+  failed_when: false
+
+- name: Check application DB role exists
+  become_user: postgres
+  command: psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='{{ db_app_user | default('appuser') }}';"
+  register: db_role_check
+  changed_when: false
+  failed_when: false
+
+- name: Check application database exists
+  become_user: postgres
+  command: psql -tAc "SELECT 1 FROM pg_database WHERE datname='{{ db_app_database | default('appdb') }}';"
+  register: db_database_check
+  changed_when: false
+  failed_when: false
+
+- name: Read PostgreSQL listen_addresses
+  become_user: postgres
+  command: psql -tAc "SHOW listen_addresses;"
+  register: db_listen_check
+  changed_when: false
+  failed_when: false
+
+- name: Read PostgreSQL log_connections
+  become_user: postgres
+  command: psql -tAc "SHOW log_connections;"
+  register: db_log_connections_check
+  changed_when: false
+  failed_when: false
+
+- name: Read pg_hba.conf
+  command: cat {{ postgresql_hba_path | default('/etc/postgresql/16/main/pg_hba.conf') }}
+  register: db_hba_check
+  changed_when: false
+  failed_when: false
+
+- name: Check HBA marker block presence
+  shell: "grep -q '# BEGIN ANSIBLE APP ACCESS' {{ postgresql_hba_path | default('/etc/postgresql/16/main/pg_hba.conf') }}"
+  register: hba_marker_check
+  changed_when: false
+  failed_when: false
+
+- name: Ensure remote report directory exists
+  file:
+    path: "{{ audit_remote_report_dir | default('/opt/ansible-db-secure/reports') }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Render baseline report on remote host
+  template:
+    src: report.md.j2
+    dest: "{{ audit_remote_report_dir | default('/opt/ansible-db-secure/reports') }}/{{ audit_report_name }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Fetch baseline report to controller
+  fetch:
+    src: "{{ audit_remote_report_dir | default('/opt/ansible-db-secure/reports') }}/{{ audit_report_name }}"
+    dest: "/root/projects/ansible-db-secure/reports/{{ audit_report_name }}"
+    flat: true

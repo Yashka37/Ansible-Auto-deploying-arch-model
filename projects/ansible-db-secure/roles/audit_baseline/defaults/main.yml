@@ -1,0 +1,15 @@
+---
+audit_report_name: "{{ inventory_hostname }}-baseline-report.md"
+audit_remote_report_dir: "/opt/ansible-db-secure/reports"
+
+db_service_name: "postgresql"
+postgresql_cluster_service_name: "postgresql@16-main"
+
+db_port: 5432
+db_listen_address: "192.168.56.20"
+db_app_database: "appdb"
+db_app_user: "appuser"
+
+postgresql_major_version: "16"
+postgresql_conf_dir: "/etc/postgresql/{{ postgresql_major_version }}/main"
+postgresql_hba_path: "{{ postgresql_conf_dir }}/pg_hba.conf"

@@ -1,0 +1,31 @@
+---
+db_engine: "postgresql-compatible"
+
+db_package_name: "postgresql"
+db_service_name: "postgresql"
+db_port: 5432
+
+db_listen_address: "192.168.56.20"
+
+db_allowed_clients:
+  - "192.168.56.10/32"
+  - "192.168.56.30/32"
+
+db_admin_user: "postgres"
+db_app_database: "appdb"
+db_app_user: "appuser"
+db_app_user_password: "xxXX1234"
+
+postgresql_major_version: "16"
+postgresql_conf_dir: "/etc/postgresql/{{ postgresql_major_version }}/main"
+postgresql_conf_d_dir: "{{ postgresql_conf_dir }}/conf.d"
+postgresql_conf_path: "{{ postgresql_conf_dir }}/postgresql.conf"
+postgresql_hba_path: "{{ postgresql_conf_dir }}/pg_hba.conf"
+
+postgresql_log_connections: "on"
+postgresql_log_disconnections: "on"
+postgresql_logging_collector: "on"
+
+ufw_enabled: true
+auditd_enabled: true
+openscap_enabled: false

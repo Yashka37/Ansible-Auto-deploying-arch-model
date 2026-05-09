@@ -1,0 +1,14 @@
+---
+- name: Restart ssh
+  systemd:
+    name: ssh
+    state: restarted
+
+- name: Apply sysctl settings
+  command: sysctl --system
+
+- name: Restart auditd
+  systemd:
+    name: auditd
+    state: restarted
+

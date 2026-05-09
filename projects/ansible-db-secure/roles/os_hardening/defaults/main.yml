@@ -1,0 +1,70 @@
+---
+os_hardening_packages:
+  - ufw
+  - auditd
+  - libpam-pwquality
+
+os_hardening_sudo_user: "user1"
+os_hardening_manage_sudoers_user: true
+os_hardening_sudo_nopasswd: true
+
+ssh_port: 22
+db_port: 5432
+db_allowed_clients:
+  - "192.168.56.10/32"
+  - "192.168.56.30/32"
+
+#----------------- dostupka po SSH -------
+os_ssh_permit_root_login: "no"
+os_ssh_password_authentication: "no"
+os_ssh_pubkey_authentication: "yes"
+os_ssh_max_auth_tries: 3
+os_ssh_client_alive_interval: 300
+os_ssh_client_alive_count_max: 2
+os_ssh_x11_forwarding: "no"
+
+os_pwquality_minlen: 12
+os_pwquality_minclass: 3
+os_pwquality_difok: 4
+os_pwquality_maxrepeat: 3
+
+os_login_defs:
+  PASS_MAX_DAYS: "90"
+  PASS_MIN_DAYS: "1"
+  PASS_WARN_AGE: "7"
+
+os_protected_home_dirs:
+  - path: "/home/user1"
+    owner: "user1"
+    group: "user1"
+    mode: "0700"
+
+os_critical_file_permissions:
+  - path: "/etc/passwd"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  - path: "/etc/group"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  - path: "/etc/shadow"
+    owner: "root"
+    group: "shadow"
+    mode: "0640"
+
+os_sysctl_settings:
+  kernel.dmesg_restrict: 1
+  kernel.kptr_restrict: 2
+  kernel.randomize_va_space: 2
+  kernel.perf_event_paranoid: 3
+  kernel.kexec_load_disabled: 1
+  kernel.unprivileged_bpf_disabled: 1
+  kernel.yama.ptrace_scope: 3
+  vm.mmap_min_addr: 65536
+  fs.protected_symlinks: 1
+  fs.protected_hardlinks: 1
+  fs.protected_fifos: 2
+  fs.protected_regular: 2
+  fs.suid_dumpable: 0
+

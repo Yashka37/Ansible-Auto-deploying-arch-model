@@ -1,0 +1,6 @@
+---
+- name: Audit DB server baseline
+  hosts: db_servers
+  become: true
+  roles:
+    - audit_baseline

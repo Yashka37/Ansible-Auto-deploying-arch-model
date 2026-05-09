@@ -1,0 +1,6 @@
+---
+- name: Bootstrap managed Linux nodes
+  hosts: db_servers
+  become: true
+  roles:
+    - common

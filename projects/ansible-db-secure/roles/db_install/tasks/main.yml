@@ -1,0 +1,37 @@
+---
+- name: Install PostgreSQL server and client packages
+  apt:
+    name:
+      - "{{ db_package_name }}"
+      - postgresql-client
+    state: present
+    update_cache: true
+  when: ansible_os_family == "Debian"
+
+- name: Ensure PostgreSQL service is enabled and started
+  systemd:
+    name: "{{ db_service_name }}"
+    enabled: true
+    state: started
+
+- name: Check whether application DB role exists
+  become_user: "{{ db_admin_user }}"
+  command: psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='{{ db_app_user }}';"
+  register: db_app_user_check
+  changed_when: false
+
+- name: Create application DB role
+  become_user: "{{ db_admin_user }}"
+  command: psql -c "CREATE ROLE {{ db_app_user }} LOGIN PASSWORD '{{ db_app_user_password }}';"
+  when: db_app_user_check.stdout.strip() != "1"
+
+- name: Check whether application database exists
+  become_user: "{{ db_admin_user }}"
+  command: psql -tAc "SELECT 1 FROM pg_database WHERE datname='{{ db_app_database }}';"
+  register: db_app_database_check
+  changed_when: false
+
+- name: Create application database
+  become_user: "{{ db_admin_user }}"
+  command: createdb -O {{ db_app_user }} {{ db_app_database }}
+  when: db_app_database_check.stdout.strip() != "1"

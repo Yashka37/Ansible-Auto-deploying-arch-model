@@ -1,0 +1,7 @@
+---
+db_package_name: "postgresql"
+db_service_name: "postgresql"
+db_admin_user: "postgres"
+db_app_database: "appdb"
+db_app_user: "appuser"
+db_app_user_password: "LabPass_2026!"

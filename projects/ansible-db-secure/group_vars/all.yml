@@ -1,0 +1,45 @@
+---
+project_name: "ansible-db-secure"
+project_owner: "user1"
+project_group: "user1"
+
+base_work_dir: "/opt/ansible-db-secure"
+base_report_dir: "/opt/ansible-db-secure/reports"
+base_tmp_dir: "/opt/ansible-db-secure/tmp"
+
+ssh_port: 22
+ssh_allowed_clients:
+  - "192.168.56.10/32"
+
+baseline_source_name: "FSTEC Russia Linux 25.12.2022"
+baseline_profile_name: "Ermishin-Ansible-1"
+
+common_manage_base_packages: true
+common_manage_base_dirs: true
+common_manage_rsyslog: true
+
+common_packages:
+  - vim
+  - nano
+  - curl
+  - wget
+  - git
+  - unzip
+  - zip
+  - jq
+  - tree
+  - rsync
+  - bash-completion
+  - ca-certificates
+  - gnupg
+  - python3
+  - python3-pip
+  - sudo
+  - acl
+  - rsyslog
+
+common_directories:
+  - "/opt/ansible-db-secure"
+  - "/opt/ansible-db-secure/reports"
+  - "/opt/ansible-db-secure/tmp"
+

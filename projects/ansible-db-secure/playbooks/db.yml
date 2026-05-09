@@ -1,0 +1,7 @@
+---
+- name: Install and harden database layer on DB servers
+  hosts: db_servers
+  become: true
+  roles:
+    - db_install
+    - db_hardening

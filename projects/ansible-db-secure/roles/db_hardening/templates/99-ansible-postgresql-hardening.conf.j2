@@ -1,0 +1,9 @@
+listen_addresses = '{{ hostvars[inventory_hostname].db_listen_address | default(ansible_host) }}'
+port = {{ hostvars[inventory_hostname].db_port | default(5432) }}
+
+password_encryption = 'scram-sha-256'
+
+logging_collector = {{ hostvars[inventory_hostname].postgresql_logging_collector | default('on') }}
+log_connections = {{ hostvars[inventory_hostname].postgresql_log_connections | default('on') }}
+log_disconnections = {{ hostvars[inventory_hostname].postgresql_log_disconnections | default('on') }}
+log_line_prefix = '%m [%p] %u@%d '
